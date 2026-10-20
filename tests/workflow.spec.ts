@@ -104,7 +104,7 @@ test("custom notes remain unpriced; failed request preserves notes", async ({
   await page
     .getByRole("button", { name: "Generate Change Order", exact: true })
     .click();
-  await expect(page.getByRole("alert")).toContainText(
+  await expect(page.getByRole("main").getByRole("alert")).toContainText(
     "Test service unavailable",
   );
   await expect(page.getByLabel("Source notes")).toHaveValue(notes);
