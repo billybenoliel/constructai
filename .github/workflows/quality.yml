@@ -1,0 +1,25 @@
+name: Quality checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install --global pnpm@11.25.0
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint && pnpm typecheck && pnpm test && pnpm build
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Browser workflow against production build
+        run: |
+          pnpm start > /tmp/constructai-server.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl --silent --fail http://127.0.0.1:3000/api/generate; then break; fi
+            sleep 1
+          done
+          pnpm test:e2e
